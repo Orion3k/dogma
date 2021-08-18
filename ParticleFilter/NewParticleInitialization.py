@@ -12,7 +12,8 @@ import Grid
 import numpy as np
 import pdb
 
-def NewParticleInitialization(Vb, grid_cell_array, meas_cell_array, birth_particle_array, check_values = False):
+
+def NewParticleInitialization(Vb, grid_cell_array, meas_cell_array, birth_particle_array, check_values=False):
     # accumulated mass for new born particles by cell
     particle_orders_array_accum = grid_cell_array.accumulate("rho_b")
 
@@ -53,7 +54,7 @@ def NewParticleInitialization(Vb, grid_cell_array, meas_cell_array, birth_partic
             birth_particle_array.set_weight(i, w_UA)
             initialize_new_particle_UA(birth_particle_array, i, cell_position)
 
-	# debugging values
+    # debugging values
     if check_values:
         # check weight array should equal rho_b in each grid cell?
         index = birth_particle_array.particles[0].index
@@ -62,22 +63,23 @@ def NewParticleInitialization(Vb, grid_cell_array, meas_cell_array, birth_partic
         while i != birth_particle_array.get_length():
             if birth_particle_array.particles[i].index == index:
                 sum_weight += birth_particle_array.particles[i].weight
-                i = i+1
+                i = i + 1
             else:
-                if (sum_weight - grid_cell_array.get_cell_attr(index, "rho_b"))**2 < 10.**-10:
+                if (sum_weight - grid_cell_array.get_cell_attr(index, "rho_b")) ** 2 < 10. ** -10:
                     sum_weight = birth_particle_array.particles[i].weight
                     index = birth_particle_array.particles[i].index
-                    i = i+1
+                    i = i + 1
 
                 else:
-                    print "Sum of weights vs rho_b: ", sum_weight, rho_b
-                    assert ((sum_weight - grid_cell_array.get_cell_attr(index, "rho_b"))**2 < 10.**-10)
+                    print("Sum of weights vs rho_b: ", sum_weight, rho_b)
+                    assert ((sum_weight - grid_cell_array.get_cell_attr(index, "rho_b")) ** 2 < 10. ** -10)
 
         rho_b = grid_cell_array.get_cell_attr(index, "rho_b")
-        print "rho_b: ", rho_b
-        print "Sum of particles in the grid cell: ", sum_weight
+        print("rho_b: ", rho_b)
+        print("Sum of particles in the grid cell: ", sum_weight)
 
-    return 
+    return
+
 
 # normalizes particle_orders_array_accum so that the aggregating
 # particles assigned to each grid cell is Vb particles in total
@@ -85,8 +87,9 @@ def normalize_particle_orders(particle_orders_array_accum, Vb):
     # maximum is the last element in accumulative array
     array_max = particle_orders_array_accum[-1]
     if array_max <= 0: raise Exception("Accumulative array is empty or negative.")
-    particle_orders_array_accum *=  Vb / (1.0 * array_max)
+    particle_orders_array_accum *= Vb / (1.0 * array_max)
     return
+
 
 # Calculates first index in birth_particle_array of cell j
 def calc_start_idx(particle_orders_array_accum, cell_index):
@@ -95,28 +98,34 @@ def calc_start_idx(particle_orders_array_accum, cell_index):
     else:
         return int(particle_orders_array_accum[cell_index - 1])
 
+
 # Calculates last index in birth_particle_array of cell j
 def calc_end_idx(particle_orders_array_accum, cell_index):
     # end_idx would be start_idx - 1 if mass = 0 for cell
     return int(particle_orders_array_accum[cell_index]) - 1
 
+
 # equantion 79 and 80: calculates number of new associated particles
 def calc_num_assoc(p_A, num_new_particles):
     return int(p_A * num_new_particles)
+
 
 # equation 75: calculates weight of an associated new particle
 def calc_weight_assoc(nu_A, p_A, grid_cell_array, cell_index):
     return p_A * grid_cell_array.get_cell_attr(cell_index, "rho_b") / (1.0 * nu_A) if nu_A > 0 else 0.
 
+
 # equation 77: calculates weight of an unassociated new particle
 def calc_weight_unassoc(nu_UA, p_A, grid_cell_array, cell_index):
     return (1 - p_A) * grid_cell_array.get_cell_attr(cell_index, "rho_b") / (1.0 * nu_UA) if nu_UA > 0 else 0.
+
 
 # Initializes associated new-born particles according to equations 74
 def initialize_new_particle_A(particle_array, particle_index, meas_cell_array, position):
     cell_index = particle_array.get_cell_idx(particle_index)
     particle_array.initialize_newborn_A(particle_index, meas_cell_array.get_measurement(cell_index), position)
     return
+
 
 # Initializes unassociated new-born particles according to equations 76
 def initialize_new_particle_UA(particle_array, particle_index, position):

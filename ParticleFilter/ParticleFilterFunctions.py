@@ -16,12 +16,13 @@ The grids have 33 cm resolution.
 
 """
 import matplotlib
-matplotlib.use('Agg')
+
 
 import numpy as np
 import pdb
 from scipy.stats import itemfreq
 
+matplotlib.use('Agg')
 seed = 1987
 np.random.seed(seed)
 
@@ -55,39 +56,39 @@ if not os.path.exists(OUTPUT_DIR):
 	os.makedirs(OUTPUT_DIR)
 
 def crop_center(img,crop):
-    m,x,y = img.shape
-    startx = x//2-(crop//2)
-    starty = y//2-(crop//2)    
-    return img[:,starty:starty+crop,startx:startx+crop]
+	m,x,y = img.shape
+	startx = x//2-(crop//2)
+	starty = y//2-(crop//2)
+	return img[:,starty:starty+crop,startx:startx+crop]
 
 # Populate the Dempster-Shafer measurement masses.
 def create_DST_grids(grids, meas_mass=0.95):
-    
-    data = []
-    
-    for i in range(grids.shape[0]):
 
-        grid = grids[i,:,:]
-        free_array = np.zeros(grid.shape)
-        occ_array = np.zeros(grid.shape)
-        
-        # occupied indices
-        indices = np.where(grid == 1)
-        occ_array[indices] = meas_mass
+	data = []
 
-        # free indices
-        indices = np.where(grid == 2)
-        free_array[indices] = meas_mass
+	for i in range(grids.shape[0]):
 
-        # car
-        indices = np.where(grid == 3)
-        occ_array[indices] = 1.
+		grid = grids[i,:,:]
+		free_array = np.zeros(grid.shape)
+		occ_array = np.zeros(grid.shape)
 
-        data.append(np.stack((free_array, occ_array)))
+		# occupied indices
+		indices = np.where(grid == 1)
+		occ_array[indices] = meas_mass
 
-    data = np.array(data) 
-        
-    return data
+		# free indices
+		indices = np.where(grid == 2)
+		free_array[indices] = meas_mass
+
+		# car
+		indices = np.where(grid == 3)
+		occ_array[indices] = 1.
+
+		data.append(np.stack((free_array, occ_array)))
+
+	data = np.array(data)
+
+	return data
 
 def main():
 
@@ -101,13 +102,13 @@ def main():
 		grids = np.array(grids)
 
 		end = time.time()
-		print "Loading simulation datatook", end - start, len(grids), grids[0].shape
+		print ("Loading simulation datatook", end - start, len(grids), grids[0].shape)
 
 	# crop grids to the desired shape
 	shape = (128,128)
 	grids = np.array(grids)
 	grids = crop_center(grids, shape[0])
-	print grids.shape
+	print (grids.shape)
 
 	do_plot = True # Toggle me for DOGMA plots!
 
@@ -147,13 +148,13 @@ def main():
 	start = time.time()
 	grid_cell_array = GridCellArray(shape, p_A)
 	end =  time.time()
-	print "grid_cell_array initialization took", end - start
+	print ("grid_cell_array initialization took", end - start)
 
 	# initialize a particle array
 	start = time.time()
 	particle_array = ParticleArray(V, grid_cell_array.get_shape(), state_size, T, p_S, scale_vel, scale_acc, process_pos, process_vel, process_acc)
 	end =  time.time()
-	print "particle_array initialization took", end - start
+	print ("particle_array initialization took", end - start)
 
 	# data: [N x 2 x W x D]
 	# second dimension is masses {0: m_free, 1: m_occ}
@@ -222,7 +223,7 @@ def main():
 		# algorithm 7: Resample
 		# skips particle initialization for particle_array_next because all particles will be copied in
 		particle_array_next = ParticleArray(V, grid_cell_array.get_shape(), state_size, T, p_S, \
-				                        scale_vel, scale_acc, process_pos, process_vel, process_acc, empty_array = True)
+										scale_vel, scale_acc, process_pos, process_vel, process_acc, empty_array = True)
 		Resample(particle_array, birth_particle_array, particle_array_next, check_values = verbose)
 
 		# switch to new particle array
@@ -230,7 +231,7 @@ def main():
 		particle_array_next = None
 
 		end = time.time()
-		print "Time per iteration: ", end - start
+		print ("Time per iteration: ", end - start)
 
 		# Plotting: The environment is stored in grids[i] (matrix of  values (0,1,2))
 		#           The DOGMA is stored in DOGMA[i]
@@ -240,20 +241,20 @@ def main():
 			title = "DOGMa Iteration %d" % i
 			colorwheel_plot(head_grid, occ_grid=occ_grid, m_occ_grid = DOGMA[i][0,:,:], title=os.path.join(OUTPUT_DIR, title), show=True, save=True)
 
-		print "Iteration ", i, " complete"
+		print ("Iteration ", i, " complete")
 
 		hkl.dump([DOGMA, var_x_vel, var_y_vel, covar_xy_vel], os.path.join(OUTPUT_DIR, 'DOGMA.hkl'), mode='w')
-		print "DOGMA written to hickle file."
+		print ("DOGMA written to hickle file.")
 		
 	return
 
 # Save DOGMa: 4x128x128 (occupied mass, free mass, velocity x, velocity y, original measurement grid)
 # and DOGMa statistics: velocity variances and covariances 
 def get_dogma(grid_cell_array, grids, state_size, meas_grid, shape):
-    
-    ncells = grid_cell_array.get_length()
 
-    if state_size == 4:
+	ncells = grid_cell_array.get_length()
+
+	if state_size == 4:
 		posO = np.zeros([ncells])
 		posF = np.zeros([ncells])
 		velX = np.zeros([ncells])
@@ -283,7 +284,7 @@ def get_dogma(grid_cell_array, grids, state_size, meas_grid, shape):
 
 		return newDOGMA, var_x_vel, var_y_vel, covar_xy_vel
 
-    else:
+	else:
 		raise Exception("Unexpected state size.")
 		return
 
@@ -296,7 +297,7 @@ def dogma2head_grid(dogma, var_x_vel, var_y_vel, covar_xy_vel, mS = 4., epsilon=
 		epsilon - (opt)(float) Minimum cell vel mag required to plot heading
 	OUTPUTS:
 		head_grid - (np.matrix) Grid (of same shape as each vel grid) containing
-		                        object headings at each cell, in rad
+								object headings at each cell, in rad
 	"""
 	grid_shape = dogma[0,:,:].shape
 
@@ -327,4 +328,4 @@ def dogma2head_grid(dogma, var_x_vel, var_y_vel, covar_xy_vel, mS = 4., epsilon=
 	return head_grid
 
 if __name__ == "__main__":
-    main()
+	main()
